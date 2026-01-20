@@ -247,6 +247,47 @@ def add_habit():
     flash('Habit created!', 'success')
     return redirect(url_for('habits_list'))
 
+@app.route('/habit/edit/<int:habit_id>', methods=['GET', 'POST'])
+@login_required
+def edit_habit(habit_id):
+    habit = Habit.query.get_or_404(habit_id)
+    if habit.owner != current_user:
+        flash('Unauthorized', 'danger')
+        return redirect(url_for('dashboard'))
+        
+    if request.method == 'POST':
+        habit.name = request.form.get('name')
+        habit.category = request.form.get('category')
+        habit.frequency = request.form.get('frequency')
+        habit.priority = request.form.get('priority', type=int)
+        habit.difficulty = request.form.get('difficulty', type=int)
+        habit.target_value = request.form.get('target_value', type=int)
+        habit.min_value = request.form.get('min_value', type=int)
+        habit.unit = request.form.get('unit')
+        habit.identity_label = request.form.get('identity_label')
+        
+        # Recalculate points
+        habit.points = int(10 * habit.difficulty * ((habit.priority + 1) / 2))
+        
+        db.session.commit()
+        flash('Habit updated!', 'success')
+        return redirect(url_for('habits_list'))
+        
+    return render_template('edit_habit.html', habit=habit)
+
+@app.route('/habit/delete/<int:habit_id>', methods=['POST'])
+@login_required
+def delete_habit(habit_id):
+    habit = Habit.query.get_or_404(habit_id)
+    if habit.owner != current_user:
+        flash('Unauthorized', 'danger')
+        return redirect(url_for('dashboard'))
+        
+    db.session.delete(habit)
+    db.session.commit()
+    flash('Habit deleted.', 'success')
+    return redirect(url_for('habits_list'))
+
 @app.route('/habit/toggle/<int:habit_id>', methods=['POST'])
 @login_required
 def toggle_habit(habit_id):
