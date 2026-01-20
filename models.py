@@ -82,11 +82,18 @@ class RoutineItem(db.Model):
     
 class ScheduleLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    routine_id = db.Column(db.Integer, db.ForeignKey('routine_item.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # Denormalized for easier query
+    # routine_id is null for ad-hoc/imported tasks
+    routine_id = db.Column(db.Integer, db.ForeignKey('routine_item.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date = db.Column(db.Date, nullable=False)
+    
+    # For ad-hoc/imported items
+    task = db.Column(db.String(100), nullable=True) 
+    time = db.Column(db.String(20), nullable=True) # Usually stored as "10:00" for display
+    
     status = db.Column(db.Boolean, default=False)
     points = db.Column(db.Integer, default=10)
+    is_routine = db.Column(db.Boolean, default=False)
     day_id = db.Column(db.Integer, db.ForeignKey('day.id'), nullable=True)
 
 class PrayerLog(db.Model):

@@ -1,14 +1,33 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+import os
+import re
+import random
+import uuid
 from datetime import datetime, timedelta, date
+from functools import wraps
+from collections import defaultdict
+
+import requests
+from bs4 import BeautifulSoup
+from PIL import Image
+try:
+    import pytesseract
+except ImportError:
+    pytesseract = None
+try:
+    import docx
+except ImportError:
+    docx = None
+try:
+    import openpyxl
+except ImportError:
+    openpyxl = None
+from hijri_converter import Gregorian
+from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from config import Config
 from models import db, User, Habit, HabitLog, Schedule, RoutineItem, ScheduleLog, PrayerLog, Dua, Day
-import os
-import re
-import pytesseract
-from PIL import Image
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -86,8 +105,6 @@ def guest_login():
     return redirect(url_for('dashboard'))
 
 # --- Admin Routes ---
-from functools import wraps
-
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -464,20 +481,7 @@ def init_db():
         
     return "Database Initialized, Seeded & Admin Created!"
 
-import os
-import re
-from PIL import Image
-try:
-    import pytesseract
-except ImportError:
-    pytesseract = None
-from werkzeug.utils import secure_filename
-import requests
-from bs4 import BeautifulSoup
-import random
-from hijri_converter import Gregorian
-
-# Static Islamic Events Dictionary (Month Name -> {Day: Description or List of Descriptions})
+# Static Islamic Events Dictionary
 ISLAMIC_EVENTS = {
     'Muharram': {
         1: 'Islamic New Year (1st Muharram) - Commemorates the Hijra',
@@ -984,10 +988,11 @@ def import_schedule_confirm():
             new_item = ScheduleLog(
                 user_id=current_user.id,
                 day_id=current_day.id,
+                date=today, # Required
                 task=a,
                 time=t,
-                status='Pending',
-                is_routine=True # Imported items treated as routine for now
+                status=False, # Boolean in model
+                is_routine=False # Imported ones aren't the original routine items
             )
             db.session.add(new_item)
             count += 1

@@ -9,3 +9,6 @@ pytesseract
 requests
 beautifulsoup4
 hijri-converter
+python-docx
+openpyxl
+gunicorn
