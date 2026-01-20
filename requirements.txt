@@ -2,7 +2,7 @@ Flask
 Flask-SQLAlchemy
 Flask-Login
 Flask-WTF
-email_validator
+email-validator
 werkzeug
 Pillow
 pytesseract
@@ -11,4 +11,5 @@ beautifulsoup4
 hijri-converter
 python-docx
 openpyxl
+psycopg2-binary
 gunicorn
