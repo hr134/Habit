@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Habit & Deen Tracker</title>
+
+    <link rel="shortcut icon" href="/static/img/mylogo.png">
+
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Amiri&display=swap"
         rel="stylesheet">
@@ -118,6 +121,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script>
+        // Internal Pinger to prevent Render spin-down
+        setInterval(function () {
+            fetch('/ping').then(response => console.log("Keep-alive ping sent")).catch(err => console.error("Ping failed"));
+        }, 300000); // 5 minutes
+    </script>
 </body>
 
 </html>
