@@ -871,91 +871,87 @@ def analytics_data():
 @login_required
 def upload_schedule():
     if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('No file part', 'danger')
-            return redirect(request.url)
+        manual_text = request.form.get('manual_text')
+        text_content = ""
         
-        file = request.files['file']
-        if file.filename == '':
-            flash('No selected file', 'danger')
-            return redirect(request.url)
+        # Case 1: Manual Text Input
+        if manual_text and manual_text.strip():
+            text_content = manual_text
             
-        if file:
-            filename = secure_filename(file.filename)
-            upload_folder = os.path.join('static', 'uploads')
-            os.makedirs(upload_folder, exist_ok=True)
-            filepath = os.path.join(upload_folder, filename)
-            file.save(filepath)
-            
-            text_content = ""
-            ext = os.path.splitext(filename)[1].lower()
-            
-            try:
-                # 1. Text Files
-                if ext == '.txt':
-                    with open(filepath, 'r', encoding='utf-8') as f:
-                        text_content = f.read()
-                        
-                # 2. Word Documents
-                elif ext in ['.doc', '.docx']:
-                    try:
-                        import docx
+        # Case 2: File Upload
+        elif 'file' in request.files:
+            file = request.files['file']
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                upload_folder = os.path.join('static', 'uploads')
+                os.makedirs(upload_folder, exist_ok=True)
+                filepath = os.path.join(upload_folder, filename)
+                file.save(filepath)
+                
+                ext = os.path.splitext(filename)[1].lower()
+                
+                try:
+                    # 1. Text Files
+                    if ext == '.txt':
+                        with open(filepath, 'r', encoding='utf-8') as f:
+                            text_content = f.read()
+                            
+                    # 2. Word Documents
+                    elif ext in ['.doc', '.docx']:
+                        if not docx:
+                             flash("Word document processing not available.", "danger")
+                             return redirect(request.url)
                         doc = docx.Document(filepath)
                         full_text = []
                         for para in doc.paragraphs:
                             if para.text.strip():
                                 full_text.append(para.text)
-                        
-                        # Also get text from tables
                         for table in doc.tables:
                             for row in table.rows:
                                 row_text = [cell.text for cell in row.cells if cell.text.strip()]
                                 if row_text:
                                     full_text.append(" | ".join(row_text))
-                                    
                         text_content = "\n".join(full_text)
-                    except Exception as doc_e:
-                        flash(f"Error reading Word file: {doc_e}", "danger")
-                        return redirect(request.url)
-                    
-                # 3. Excel Files
-                elif ext in ['.xls', '.xlsx']:
-                    try:
-                        import openpyxl
+                        
+                    # 3. Excel Files
+                    elif ext in ['.xls', '.xlsx']:
+                        if not openpyxl:
+                             flash("Excel processing not available.", "danger")
+                             return redirect(request.url)
                         wb = openpyxl.load_workbook(filepath, data_only=True)
                         full_text = []
                         for sheet in wb.sheetnames:
                             ws = wb[sheet]
                             full_text.append(f"--- Sheet: {sheet} ---")
                             for row in ws.iter_rows(values_only=True):
-                                # Filter None values
                                 row_data = [str(cell) for cell in row if cell is not None]
                                 if row_data:
                                     full_text.append(" | ".join(row_data))
                         text_content = "\n".join(full_text)
-                    except Exception as xls_e:
-                         flash(f"Error reading Excel file: {xls_e}", "danger")
-                         return redirect(request.url)
+                        
+                    # 4. Images (OCR)
+                    elif ext in ['.jpg', '.jpeg', '.png']:
+                        if not pytesseract:
+                             flash("Tesseract OCR not installed.", "danger")
+                             return redirect(request.url)
+                        text_content = pytesseract.image_to_string(Image.open(filepath))
                     
-                # 4. Images (Existing OCR)
-                elif ext in ['.jpg', '.jpeg', '.png']:
-                    if not pytesseract:
-                         raise ImportError("Tesseract is not installed.")
-                    text_content = pytesseract.image_to_string(Image.open(filepath))
-                
-                else:
-                    flash("Unsupported file type for auto-extraction.", "warning")
+                    else:
+                        flash("Unsupported file type.", "warning")
+                        return redirect(request.url)
+                except Exception as e:
+                    flash(f"Processing Error: {str(e)}", 'danger')
                     return redirect(request.url)
-                
-                # Parse content
-                parsed_items = parse_schedule_items(text_content)
-                
-                flash(f"Processing Complete! Found {len(parsed_items)} potential schedule items.", 'success')
-                return render_template('upload_result.html', parsed_items=parsed_items, raw_text=text_content)
-                
-            except Exception as e:
-                flash(f"Processing Error: {str(e)}", 'danger')
-                
+
+        if not text_content.strip():
+            flash("Please upload a file or paste your schedule text.", "warning")
+            return redirect(request.url)
+
+        # Parse and show results
+        parsed_items = parse_schedule_items(text_content)
+        flash(f"Processing Complete! Found {len(parsed_items)} potential schedule items.", 'success')
+        return render_template('upload_result.html', parsed_items=parsed_items, raw_text=text_content)
+            
     return render_template('upload_schedule.html')
 
 def parse_schedule_items(text):
