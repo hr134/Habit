@@ -8,13 +8,23 @@
     </div>
 
     <form action="{{ url_for('import_schedule_confirm') }}" method="POST">
+        <div
+            style="margin-bottom: 2rem; background: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.05); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Schedule Name</label>
+            <input type="text" name="schedule_name" value="Spring Semester 2026" placeholder="e.g. My Semester Routine"
+                style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+        </div>
+
         {% if parsed_items %}
         <div class="table-responsive">
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
                 <thead>
-                    <tr style="border-bottom: 2px solid var(--border-color); text-align: left;">
-                        <th style="padding: 0.5rem;">Time</th>
-                        <th style="padding: 0.5rem;">Activity</th>
+                    <tr
+                        style="border-bottom: 2px solid var(--border-color); text-align: left; font-size: 0.9rem; color: var(--text-muted);">
+                        <th style="padding: 0.5rem;">Title (Course)</th>
+                        <th style="padding: 0.5rem;">Day</th>
+                        <th style="padding: 0.5rem;">Start</th>
+                        <th style="padding: 0.5rem;">End</th>
                         <th style="padding: 0.5rem; width: 50px;">Include</th>
                     </tr>
                 </thead>
@@ -22,10 +32,21 @@
                     {% for item in parsed_items %}
                     <tr style="border-bottom: 1px solid var(--border-color);">
                         <td style="padding: 0.5rem;">
-                            <input type="text" name="times" value="{{ item.time }}" style="width: 100px;">
+                            <input type="text" name="titles" value="{{ item.title }}" style="width: 100%;">
                         </td>
                         <td style="padding: 0.5rem;">
-                            <input type="text" name="activities" value="{{ item.activity }}">
+                            <select name="days" style="padding: 0.4rem;">
+                                {% for day in ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+                                'Friday'] %}
+                                <option value="{{ day }}" {% if day==item.day %}selected{% endif %}>{{ day }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td style="padding: 0.5rem;">
+                            <input type="text" name="starts" value="{{ item.start }}" style="width: 80px;">
+                        </td>
+                        <td style="padding: 0.5rem;">
+                            <input type="text" name="ends" value="{{ item.end }}" style="width: 80px;">
                         </td>
                         <td style="padding: 0.5rem; text-align: center;">
                             <input type="checkbox" checked onclick="toggleRow(this)">
@@ -37,15 +58,14 @@
         </div>
         {% else %}
         <div class="alert alert-warning">
-            Could not automatically detect clean time-based items. Please check the raw text below or try a clearer
-            file.
+            Could not automatically detect clean schedule items. Please check the raw text below or try a clearer file.
         </div>
         {% endif %}
 
         <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
             <a href="{{ url_for('upload_schedule') }}" class="btn btn-outline">Cancel</a>
             <button type="submit" class="btn btn-primary" {% if not parsed_items %}disabled{% endif %}>
-                Confirm & Add to Schedule
+                Create Schedule & Import
             </button>
         </div>
     </form>

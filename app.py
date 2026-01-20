@@ -934,99 +934,129 @@ def upload_schedule():
 
 def parse_schedule_items(text):
     """
-    Heuristic parser to find time-based items in text.
-    Returns list of dicts: {'time': 'HH:MM', 'activity': 'Name'}
+    Advanced parser for schedule tables (SL, Course, Section, Day, Time Range, Room).
+    Returns list of dicts: {'title', 'day', 'start', 'end'}
     """
     items = []
     lines = text.split('\n')
-    
-    # Days reference
     days_list = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
     
-    # Regex for time formats: 10:00, 10.30, 10am, 10:00AM
-    time_pattern = re.compile(r'(\d{1,2}[:.]\d{2})\s*(?:[APap][Mm])?|(\d{1,2})\s*[APap][Mm]')
+    # Improved time range pattern (e.g. 09:35am – 10:35am or 09:35-10:35)
+    # Group 1: Start Time, Group 2: End Time
+    range_pattern = re.compile(r'(\d{1,2}[:.]\d{2}\s*(?:[APap][Mm])?)\s*[-–]\s*(\d{1,2}[:.]\d{2}\s*(?:[APap][Mm])?)')
+    single_time_pattern = re.compile(r'(\d{1,2}[:.]\d{2}\s*(?:[APap][Mm])?)|(\d{1,2}\s*[APap][Mm])')
     
     for line in lines:
         line = line.strip()
-        if not line: continue
+        if not line or len(line) < 5: continue
         
-        # Check if line contains a day name
-        line_day = None
+        # 1. Detect Day
+        found_day = None
         for day in days_list:
-            if day in line:
-                line_day = day
+            if day.lower() in line.lower():
+                found_day = day
                 break
         
-        match = time_pattern.search(line)
-        if match:
-            # Found a potential time
-            time_str = match.group(0)
+        if not found_day: continue # Likely a header or noise
+        
+        # 2. Detect Times
+        start_time = ""
+        end_time = ""
+        
+        range_match = range_pattern.search(line)
+        if range_match:
+            start_time = range_match.group(1).replace('.', ':')
+            end_time = range_match.group(2).replace('.', ':')
+        else:
+            # Try to find two separate times if range symbol is weird
+            times_found = single_time_pattern.findall(line)
+            # findall returns tuples if there are multiple groups, let's flatten
+            times_found = [t[0] or t[1] for t in times_found if any(t)]
+            if len(times_found) >= 2:
+                start_time = times_found[0].replace('.', ':')
+                end_time = times_found[1].replace('.', ':')
+            elif len(times_found) == 1:
+                start_time = times_found[0].replace('.', ':')
+                # Estimate end time if missing? (+1 hour)
+                end_time = start_time 
+
+        # 3. Detect Title (Course Code)
+        # Pattern: Usually something like CSC 197 or STA 240
+        course_match = re.search(r'[A-Z]{2,4}\s*\d{3}', line)
+        if course_match:
+            title = course_match.group(0)
+        else:
+            # Fallback: take part of the line before the day
+            title = line.split(found_day)[0].strip(' 0123456789\t-|.')
+            if not title: title = "Routine Item"
             
-            # Clean up the line to extract meaningful activity
-            # If we found a day, we want to include it or use it as context
-            
-            # Remove the time part
-            clean_line = line.replace(time_str, '').strip(' -:| \t')
-            
-            # If it's a table row like "1 CSC 197 A Saturday ...", 
-            # we want to extract the course code and day.
-            
-            # Heuristic: split by tabs or multiple spaces
-            parts = re.split(r'\t|\s{2,}', clean_line)
-            
-            activity = ""
-            if line_day:
-                # Try to find the part before the day
-                parts_before_day = clean_line.split(line_day)[0].strip(' \t-|')
-                activity = f"{line_day}: {parts_before_day}"
-            else:
-                activity = clean_line
-            
-            # Normalize time string
-            time_val = time_str.replace('.', ':')
-            
-            if len(activity) > 2: 
-                items.append({
-                    'time': time_val,
-                    'activity': activity
-                })
+        if found_day and start_time:
+            items.append({
+                'title': title,
+                'day': found_day,
+                'start': start_time,
+                'end': end_time
+            })
     
     return items
 
 @app.route('/schedule/import/confirm', methods=['POST'])
 @login_required
 def import_schedule_confirm():
-    # Get lists of items from form
-    times = request.form.getlist('times')
-    activities = request.form.getlist('activities')
+    schedule_name = request.form.get('schedule_name', 'Imported Schedule')
+    titles = request.form.getlist('titles')
+    days = request.form.getlist('days')
+    starts = request.form.getlist('starts')
+    ends = request.form.getlist('ends')
     
-    today = date.today()
+    if not titles:
+        flash("No items selected to import.", "warning")
+        return redirect(url_for('upload_schedule'))
+
+    # 1. Create the new Schedule
+    new_schedule = Schedule(name=schedule_name, user_id=current_user.id, is_active=True)
     
-    # Ensure Day exists
-    current_day = Day.query.filter_by(user_id=current_user.id, date=today).first()
-    if not current_day:
-        current_day = Day(user_id=current_user.id, date=today)
-        db.session.add(current_day)
-        db.session.commit()
+    # Deactivate existing schedules for this user
+    Schedule.query.filter_by(user_id=current_user.id, is_active=True).update({'is_active': False})
     
+    db.session.add(new_schedule)
+    db.session.commit() # Commit to get schedule.id
+
+    # 2. Add Routine Items
     count = 0
-    for t, a in zip(times, activities):
-        if t and a:
-            # Basic validation
-            new_item = ScheduleLog(
-                user_id=current_user.id,
-                day_id=current_day.id,
-                date=today, # Required
-                task=a,
-                time=t,
-                status=False, # Boolean in model
-                is_routine=False # Imported ones aren't the original routine items
-            )
-            db.session.add(new_item)
-            count += 1
-            
+    for i in range(len(titles)):
+        title = titles[i]
+        day = days[i]
+        start_str = starts[i]
+        end_str = ends[i]
+        
+        if title and day and start_str:
+            try:
+                # Helper to convert "09:35am" to time object
+                def parse_time_flex(t_str):
+                    t_str = t_str.lower().strip()
+                    if 'am' in t_str or 'pm' in t_str:
+                        return datetime.strptime(t_str, '%I:%M%p').time()
+                    return datetime.strptime(t_str, '%H:%M').time()
+
+                s_time = parse_time_flex(start_str)
+                e_time = parse_time_flex(end_str) if end_str else s_time
+                
+                item = RoutineItem(
+                    schedule_id=new_schedule.id,
+                    title=title,
+                    day_of_week=day,
+                    start_time=s_time,
+                    end_time=e_time
+                )
+                db.session.add(item)
+                count += 1
+            except Exception as e:
+                print(f"Skipping row {i}: {e}")
+                continue
+                
     db.session.commit()
-    flash(f"Successfully imported {count} items to your schedule!", 'success')
+    flash(f'New Schedule "{schedule_name}" created with {count} routines!', 'success')
     return redirect(url_for('schedule_view'))
 
 if __name__ == '__main__':
