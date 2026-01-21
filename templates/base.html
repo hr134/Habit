@@ -161,6 +161,7 @@
             fetch('/ping').then(response => console.log("Keep-alive ping sent")).catch(err => console.error("Ping failed"));
         }, 300000); // 5 minutes
     </script>
+    {% block scripts %}{% endblock %}
 </body>
 
 </html>
