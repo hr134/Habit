@@ -1007,6 +1007,7 @@ def get_day_details():
         dt = datetime.strptime(date_str, '%Y-%m-%d')
         month_name = dt.strftime('%B').lower()
         day_num = dt.day
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
         
         events = []
         
@@ -1036,7 +1037,6 @@ def get_day_details():
                 # wiki/Rajab
                 safe_month = h_month_name.replace(' ', '_')
                 wiki_url = f"https://en.wikipedia.org/wiki/{safe_month}"
-                headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
                 
                 resp = requests.get(wiki_url, headers=headers, timeout=3)
                 if resp.status_code == 200:
@@ -1065,6 +1065,19 @@ def get_day_details():
                                     import re
                                     clean_text = re.sub(r'\[\d+\]', '', text)
                                     events.append(f"📜 {clean_text}")
+                
+                # Try specific Date page (e.g. wiki/15_Rajab)
+                date_page_url = f"https://en.wikipedia.org/wiki/{h_date.day}_{safe_month}"
+                d_resp = requests.get(date_page_url, headers=headers, timeout=3)
+                if d_resp.status_code == 200:
+                    d_soup = BeautifulSoup(d_resp.content, 'html.parser')
+                    for section_header in ['Events', 'Observances', 'Births', 'Deaths']:
+                        s_h = d_soup.find('span', {'id': section_header})
+                        if s_h:
+                            ul = s_h.parent.find_next_sibling('ul') or s_h.parent.find_next('ul')
+                            if ul:
+                                for li in ul.find_all('li')[:3]:
+                                    events.append(f"🏷️ {li.get_text(strip=True)}")
             except Exception as w_e:
                  # Silently fail
                  print(f"Wiki Search Error: {w_e}")
@@ -1087,19 +1100,45 @@ def get_day_details():
                 events.append("No major historical events recorded for this date.")
 
             # Independent Daily Reflection (Quran/Hadith)
+            hadith = None
             try:
-                # Always attempt to add a Quranic verse as reflection
-                q_res = requests.get('https://api.alquran.cloud/v1/ayah/random')
+                # 1. Fetch random Ayah with translation
+                # Ayah number between 1 and 6236
+                ayah_num = random.randint(1, 6236)
+                q_res = requests.get(f'https://api.alquran.cloud/v1/ayah/{ayah_num}/editions/quran-uthmani,en.sahih', timeout=5)
                 if q_res.ok:
-                    ayah_data = q_res.json()
-                    if ayah_data.get('data'):
-                        verse = ayah_data['data']['text']
-                        surah = ayah_data['data']['surah']['englishName']
-                        number = ayah_data['data']['numberInSurah']
-                        reflection = f"📖 Quran {surah}:{number} – {verse}"
+                    q_data = q_res.json()
+                    if q_data.get('data') and len(q_data['data']) >= 2:
+                        arabic = q_data['data'][0]
+                        english = q_data['data'][1]
+                        
+                        surah = arabic['surah']['englishName']
+                        number = arabic['numberInSurah']
+                        
+                        reflection = {
+                            'reference': f"Quran {surah}:{number}",
+                            'arabic': arabic['text'],
+                            'english': english['text']
+                        }
                 else:
                     reflection = "Remember: Verily, with hardship comes ease."
+                
+                # 2. Fetch random Hadith (English)
+                # Using a more reliable English Hadith source
+                books = ['bukhari', 'muslim']
+                book = random.choice(books)
+                h_url = f"https://hadith-api.vercel.app/api/books/{book}?range=1-100"
+                h_res = requests.get(h_url, timeout=5)
+                if h_res.ok:
+                    h_json = h_res.json()
+                    if h_json.get('data') and h_json['data'].get('hadiths'):
+                        selected = random.choice(h_json['data']['hadiths'])
+                        hadith = {
+                            'text': selected.get('english', 'Description not available'),
+                            'source': f"{book.capitalize()} - Hadith {selected.get('hadithNumber', '?')}"
+                        }
             except Exception as q_e:
+                print(f"Reflection Fetch Error: {q_e}")
                 reflection = "Remember to take a moment for Dhikr today."
 
         except Exception as e:
@@ -1181,13 +1220,18 @@ def get_day_details():
             'date': dt.strftime('%B %d, %Y'),
             'significance': events,
             'reflection': reflection, 
+            'hadith': hadith,
             'dua': dua_data,
             'day_overview': day_overview,
             'schedule': schedule_info
         })
         
-    except ValueError:
-        return jsonify({'error': 'Invalid date format'}), 400
+    except Exception as e:
+        print(f"Error in get_day_details for {date_str}: {str(e)}")
+        # If it's a ValueError, it's likely the date format
+        if isinstance(e, ValueError):
+            return jsonify({'error': 'Invalid date format'}), 400
+        return jsonify({'error': f'Failed to load details: {str(e)}'}), 500
 
 def h_day_suffix(day):
     if 11 <= day <= 13: suffix = 'th'

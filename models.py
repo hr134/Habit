@@ -89,6 +89,9 @@ class ScheduleLog(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date = db.Column(db.Date, nullable=False)
     
+    # Relationship
+    routine = db.relationship('RoutineItem', backref='schedule_logs')
+    
     # For ad-hoc/imported items
     task = db.Column(db.String(100), nullable=True) 
     time = db.Column(db.String(20), nullable=True) # Usually stored as "10:00" for display
