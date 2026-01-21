@@ -54,11 +54,11 @@ def inject_now():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip().lower()
         password = request.form.get('password')
         
-        if User.query.filter_by(username=username).first():
+        if User.query.filter(db.func.lower(User.username) == username.lower()).first():
             flash('Username already exists', 'danger')
             return redirect(url_for('register'))
             
@@ -77,9 +77,9 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
+        username = request.form.get('username', '').strip()
         password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter(db.func.lower(User.username) == username.lower()).first()
         
         if user:
             if user.check_password(password):
@@ -581,7 +581,7 @@ def prayers():
             score = 0
             for p in ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']:
                 if getattr(log, p):
-                    score += 20 # 20 * 5 = 100 base
+                    score += 100 # 100 * 5 = 500 base
             log.spiritual_score = score
             
             db.session.commit()
