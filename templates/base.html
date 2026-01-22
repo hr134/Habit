@@ -294,6 +294,34 @@
                 return;
             }
 
+            const permissionSet = localStorage.getItem('locationPermissionHandled');
+
+            // If permission not set, show our custom explanation modal
+            if (!permissionSet) {
+                document.getElementById('location-permission-modal').classList.add('active');
+                return;
+            }
+
+            // Only fetch if they haven't explicitly denied it or if we haven't asked yet
+            if (permissionSet === 'granted') {
+                performGeoFetch();
+            }
+        }
+
+        function handleLocationPermission(granted) {
+            const modal = document.getElementById('location-permission-modal');
+            modal.classList.remove('active');
+
+            if (granted) {
+                localStorage.setItem('locationPermissionHandled', 'granted');
+                performGeoFetch();
+            } else {
+                localStorage.setItem('locationPermissionHandled', 'denied');
+                showToast('Location access denied. Prayer times will show default labels.', 'info');
+            }
+        }
+
+        function performGeoFetch() {
             navigator.geolocation.getCurrentPosition(async (position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
@@ -315,7 +343,6 @@
                     for (const [id, time] of Object.entries(prayers)) {
                         const el = document.getElementById(`time-${id}`);
                         if (el) {
-                            // Convert 24h to 12h format
                             let [h, m] = time.split(':');
                             const ampm = h >= 12 ? 'PM' : 'AM';
                             h = h % 12 || 12;
@@ -326,7 +353,8 @@
                     console.error("Failed to fetch prayer times:", err);
                 }
             }, (error) => {
-                console.warn("Geolocation permission denied or error:", error);
+                console.warn("Geolocation permission error:", error);
+                localStorage.setItem('locationPermissionHandled', 'denied');
             });
         }
 
@@ -371,6 +399,24 @@
             <div class="modal-time-details">
                 <div id="modal-day" class="modal-day-text">--</div>
                 <div id="modal-date" class="modal-date-text">--</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Permission Modal -->
+    <div id="location-permission-modal" class="clock-modal-overlay">
+        <div class="clock-modal-content" style="max-width: 400px;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📍</div>
+            <h3 style="margin-bottom: 1rem; color: var(--text-main);">Enable Location Access</h3>
+            <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 2rem;">
+                To provide you with the most accurate prayer times for <b>Fajr, Dhuhr, Asr, Maghrib, and Isha</b> based
+                on your current city, we need your location permission.
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button class="btn btn-outline" onclick="handleLocationPermission(false)" style="flex: 1;">Not
+                    Now</button>
+                <button class="btn btn-primary" onclick="handleLocationPermission(true)" style="flex: 1;">Enable
+                    Access</button>
             </div>
         </div>
     </div>
