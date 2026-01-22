@@ -232,6 +232,25 @@
                         <span>📅 Joined {{ user.join_date.strftime('%b %d, %Y') }}</span>
                         <span>🔑 Role: {{ user.role|upper }}</span>
                     </div>
+                    {% if user.latitude and user.longitude %}
+                    <div
+                        style="margin-top: 0.75rem; display: flex; gap: 1.5rem; font-size: 0.9rem; align-items: center;">
+                        <span style="color: var(--admin-primary); font-weight: 600;">📍 Last Known Location:</span>
+                        <a href="https://www.google.com/maps?q={{ user.latitude }},{{ user.longitude }}" target="_blank"
+                            style="color: var(--admin-secondary); text-decoration: none; display: flex; align-items: center; gap: 0.4rem;">
+                            <span>🌍 {{ user.latitude|round(4) }}, {{ user.longitude|round(4) }}</span>
+                            <small>(View on Maps)</small>
+                        </a>
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">
+                            🕒 Sync: {{ user.last_location_update.strftime('%b %d, %H:%M') if user.last_location_update
+                            else 'N/A' }} UTC
+                        </span>
+                    </div>
+                    {% else %}
+                    <div style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+                        📍 Location data not yet synchronized by user.
+                    </div>
+                    {% endif %}
                 </div>
                 <div style="display: flex; gap: 0.75rem;">
                     <form action="{{ url_for('admin_ban_user', user_id=user.id) }}" method="POST">

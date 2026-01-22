@@ -213,7 +213,7 @@
     <!-- Location Permission Modal -->
     <div id="location-permission-modal" class="clock-modal-overlay">
         <div class="clock-modal-content" style="max-width: 400px;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🍧</div>
+            <div style="font-size: 3rem; margin-bottom: 1rem;"> 🌏 </div>
             <h3 style="margin-bottom: 1rem; color: var(--text-main);">Enable Location Access</h3>
             <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 2rem;">
                 To provide you with the most accurate prayer times for <b>Fajr, Dhuhr, Asr, Maghrib, and Isha</b> based
@@ -433,6 +433,14 @@
                             el.innerText = `${h}:${min} ${ampm}`;
                         }
                     }
+
+                    // [NEW] Sync location with server for admin visibility
+                    fetch('/api/user/location', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ latitude: lat, longitude: lon })
+                    }).catch(e => console.error("Failed to sync location with server:", e));
+
                     if (showNotification) safeToast("Prayer times updated successfully.", "success");
                 } catch (err) {
                     console.error("Failed to fetch prayer times:", err);

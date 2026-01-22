@@ -14,6 +14,11 @@ class User(UserMixin, db.Model):
     is_banned = db.Column(db.Boolean, default=False)
     join_date = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Location Tracking
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    last_location_update = db.Column(db.DateTime, nullable=True)
+    
     # Relationships
     habits = db.relationship('Habit', backref='owner', lazy=True, cascade="all, delete-orphan")
     schedules = db.relationship('Schedule', backref='owner', lazy=True, cascade="all, delete-orphan")

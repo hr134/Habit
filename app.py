@@ -76,6 +76,13 @@ def inject_now():
         'getattr': getattr
     }
 
+def get_client_ip():
+    """Returns the real client IP, considering proxies like Render."""
+    if request.headers.get('X-Forwarded-For'):
+        # X-Forwarded-For can be a comma-separated list of IPs
+        return request.headers.get('X-Forwarded-For').split(',')[0].strip()
+    return request.remote_addr
+
 # --- Auth Routes ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -141,6 +148,21 @@ def guest_login():
     login_user(guest)
     flash('Logged in as Guest. Data is temporary', 'info')
     return redirect(url_for('dashboard'))
+
+@app.route('/api/user/location', methods=['POST'])
+@login_required
+def update_location_api():
+    data = request.json
+    lat = data.get('latitude')
+    lon = data.get('longitude')
+    
+    if lat is not None and lon is not None:
+        current_user.latitude = lat
+        current_user.longitude = lon
+        current_user.last_location_update = datetime.utcnow()
+        db.session.commit()
+        return jsonify({'success': True})
+    return jsonify({'success': False, 'error': 'Missing coordinates'}), 400
 
 # --- Admin Routes ---
 # --- Admin Decorators ---
@@ -215,7 +237,7 @@ def admin_ban_user(user_id):
         flash(f"User {user.username} has been {status}.", "success")
         # Audit log
         from models import AuditLog
-        audit = AuditLog(admin_id=current_user.id, action='ban_user', target_user_id=user.id, reason=None, ip_address=request.remote_addr)
+        audit = AuditLog(admin_id=current_user.id, action='ban_user', target_user_id=user.id, reason=None, ip_address=get_client_ip())
         db.session.add(audit)
         db.session.commit()
     return redirect(url_for('admin_users'))
@@ -230,7 +252,7 @@ def admin_delete_user(user_id):
     else:
         # Audit log BEFORE deletion to keep record of who was deleted
         from models import AuditLog
-        audit = AuditLog(admin_id=current_user.id, action='delete_user', target_user_id=user.id, reason="Admin manual deletion", ip_address=request.remote_addr)
+        audit = AuditLog(admin_id=current_user.id, action='delete_user', target_user_id=user.id, reason="Admin manual deletion", ip_address=get_client_ip())
         db.session.add(audit)
         
         db.session.delete(user)
@@ -246,7 +268,7 @@ def admin_user_detail(user_id):
     user = User.query.get_or_404(user_id)
     # Audit log for view action
     from models import AuditLog
-    audit = AuditLog(admin_id=current_user.id, action='view_user', target_user_id=user.id, reason=None, ip_address=request.remote_addr)
+    audit = AuditLog(admin_id=current_user.id, action='view_user', target_user_id=user.id, reason=None, ip_address=get_client_ip())
     db.session.add(audit)
     db.session.commit()
     # Gather related data
@@ -361,7 +383,7 @@ def admin_log_action():
         action=action,
         target_user_id=target_user_id,
         reason=reason,
-        ip_address=request.remote_addr
+        ip_address=get_client_ip()
     )
     db.session.add(audit)
     db.session.commit()
