@@ -351,12 +351,15 @@ textarea:focus {
     font-weight: 600;
 }
 
+.prayer-item .prayer-time {
+    margin-left: 1.75rem;
+    /* Precise alignment with name text after icon - Dashboard only */
+}
+
 .prayer-time {
     font-size: 0.8rem;
     color: var(--text-muted);
     font-weight: 500;
-    margin-left: 1.75rem;
-    /* Precise alignment with name text after icon */
 }
 
 .prayer-status-text {
