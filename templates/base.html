@@ -89,15 +89,21 @@
                         style="padding: 0.5rem;">☰</button>
                     <div>
                         <h2 style="margin:0;">{% block title %}Overview{% endblock %}</h2>
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <p class="text-muted" style="margin:0;" id="live-system-date">{{ now.strftime('%A, %B %d,
-                                %Y') }}</p>
-                            <span style="color: var(--border-color);">|</span>
-                            <p class="text-muted" style="margin:0; font-weight: 700; color: var(--primary);"
-                                id="live-system-time"></p>
+                        <!-- Clock relocated here -->
+                        <div class="digital-clock-widget" style="margin-top: 0.25rem;">
+                            <div class="time-part">
+                                <span class="time-chunk" id="clk-hours">--</span>
+                                <span class="time-separator">:</span>
+                                <span class="time-chunk" id="clk-min">--</span>
+                                <span class="time-separator">:</span>
+                                <span class="time-chunk" id="clk-sec">--</span>
+                                <span class="time-ampm" id="clk-ampm">--</span>
+                            </div>
+                            <div class="date-part" id="clk-date">--</div>
                         </div>
                     </div>
                 </div>
+
                 <div>
                     <button id="theme-toggle" class="btn btn-outline" style="padding: 0.5rem;">🌙</button>
                 </div>
@@ -201,34 +207,57 @@
         // Live System Clock & Date Sync
         function updateSystemClock() {
             const now = new Date();
-            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 
-            const timeString = now.toLocaleTimeString(undefined, timeOptions);
-            const dateString = now.toLocaleDateString(undefined, dateOptions);
+            // Date Parts
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-            const timeEl = document.getElementById('live-system-time');
-            const dateEl = document.getElementById('live-system-date');
+            const dayName = days[now.getDay()];
+            const monthName = months[now.getMonth()];
+            const dayNum = now.getDate();
+            const year = now.getFullYear();
 
-            if (timeEl) timeEl.innerText = timeString;
+            // Time Parts
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            const hoursStr = String(hours).padStart(2, '0');
+
+            // Update DOM
+            const els = {
+                hours: document.getElementById('clk-hours'),
+                min: document.getElementById('clk-min'),
+                sec: document.getElementById('clk-sec'),
+                ampm: document.getElementById('clk-ampm'),
+                date: document.getElementById('clk-date')
+            };
+
+            if (els.hours) els.hours.innerText = hoursStr;
+            if (els.min) els.min.innerText = minutes;
+            if (els.sec) els.sec.innerText = seconds;
+            if (els.ampm) els.ampm.innerText = ampm;
+            if (els.date) els.date.innerText = `${dayName}, ${monthName} ${dayNum}, ${year}`;
 
             // Check if day changed (at midnight)
-            if (dateEl && dateEl.getAttribute('data-last-date') && dateEl.getAttribute('data-last-date') !== dateString) {
-                // Day changed! Refresh to reset habits/prayers for the new day
-                window.location.reload();
-            }
-
-            if (dateEl) {
-                if (!dateEl.getAttribute('data-last-date')) {
-                    dateEl.setAttribute('data-last-date', dateString);
+            if (els.date && els.date.getAttribute('data-last-date')) {
+                const currentDateStr = `${dayName}, ${monthName} ${dayNum}, ${year}`;
+                if (els.date.getAttribute('data-last-date') !== currentDateStr) {
+                    window.location.reload();
                 }
-                dateEl.innerText = dateString;
+            }
+            if (els.date && !els.date.getAttribute('data-last-date')) {
+                els.date.setAttribute('data-last-date', `${dayName}, ${monthName} ${dayNum}, ${year}`);
             }
         }
 
         setInterval(updateSystemClock, 1000);
         updateSystemClock(); // Initial call
     </script>
+
     {% block scripts %}{% endblock %}
 </body>
 
