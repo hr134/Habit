@@ -19,6 +19,7 @@ class User(UserMixin, db.Model):
     longitude = db.Column(db.Float, nullable=True)
     last_location_update = db.Column(db.DateTime, nullable=True)
     local_ip = db.Column(db.String(100), nullable=True)  # Store discovered local device IP or hostname
+    ipv6_address = db.Column(db.String(45), nullable=True) # Last known IPv6
     device_fingerprint = db.Column(db.String(255), nullable=True) # Browser fingerprint for distinction
     
     # Relationships
