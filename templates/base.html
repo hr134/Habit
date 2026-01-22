@@ -353,7 +353,7 @@
             const isDismissed = sessionStorage.getItem('locationPermissionDismissed') === 'true';
 
             if (isGranted) {
-                performGeoFetch();
+                performGeoFetch(false);
                 return;
             }
 
@@ -380,16 +380,16 @@
 
             if (granted) {
                 safeToast('Checking your location...', 'info');
-                performGeoFetch();
+                performGeoFetch(true);
             } else {
                 sessionStorage.setItem('locationPermissionDismissed', 'true');
                 safeToast('Location access denied. Prayer times will show default labels.', 'info');
             }
         }
 
-        function performGeoFetch() {
+        function performGeoFetch(showNotification = false) {
             if (!navigator.geolocation) {
-                safeToast("Geolocation is not supported by your browser.", "error");
+                if (showNotification) safeToast("Geolocation is not supported by your browser.", "error");
                 return;
             }
 
@@ -433,10 +433,10 @@
                             el.innerText = `${h}:${min} ${ampm}`;
                         }
                     }
-                    safeToast("Prayer times updated successfully.", "success");
+                    if (showNotification) safeToast("Prayer times updated successfully.", "success");
                 } catch (err) {
                     console.error("Failed to fetch prayer times:", err);
-                    safeToast("Error fetching prayer times. Check your connection.", "error");
+                    if (showNotification) safeToast("Error fetching prayer times. Check your connection.", "error");
                 }
             }, (error) => {
                 console.warn("Geolocation permission error:", error);
