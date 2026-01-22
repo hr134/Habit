@@ -51,4 +51,4 @@ python test_app.py
 
 git add .
 git commit -m "Update"
-git push
+ git push --set-upstream origin main

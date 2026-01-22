@@ -90,7 +90,7 @@
                     <div>
                         <h2 style="margin:0;">{% block title %}Overview{% endblock %}</h2>
                         <!-- Clock relocated here -->
-                        <div class="digital-clock-widget" style="margin-top: 0.25rem;">
+                        <div class="digital-clock-widget" style="margin-top: 0.25rem;" onclick="toggleAnalogModal()">
                             <div class="time-part">
                                 <span class="time-chunk" id="clk-hours">--</span>
                                 <span class="time-separator">:</span>
@@ -252,11 +252,84 @@
             if (els.date && !els.date.getAttribute('data-last-date')) {
                 els.date.setAttribute('data-last-date', `${dayName}, ${monthName} ${dayNum}, ${year}`);
             }
+
+            // Analog Clock Rotation
+            const hourDeg = (hours % 12) * 30 + (now.getMinutes() / 2); // 30 deg per hour + 0.5 per minute
+            const minDeg = now.getMinutes() * 6; // 6 deg per minute
+            const secDeg = now.getSeconds() * 6; // 6 deg per second
+
+            const analog = {
+                hour: document.getElementById('analog-hour'),
+                min: document.getElementById('analog-min'),
+                sec: document.getElementById('analog-sec')
+            };
+
+
+            if (analog.hour) analog.hour.style.transform = `translateX(-50%) rotate(${hourDeg}deg)`;
+            if (analog.min) analog.min.style.transform = `translateX(-50%) rotate(${minDeg}deg)`;
+            if (analog.sec) analog.sec.style.transform = `translateX(-50%) rotate(${secDeg}deg)`;
+
+            // Modal Analog Clock Sync
+            const modalAnalog = {
+                hour: document.getElementById('modal-analog-hour'),
+                min: document.getElementById('modal-analog-min'),
+                sec: document.getElementById('modal-analog-sec')
+            };
+
+            if (modalAnalog.hour) modalAnalog.hour.style.transform = `translateX(-50%) rotate(${hourDeg}deg)`;
+            if (modalAnalog.min) modalAnalog.min.style.transform = `translateX(-50%) rotate(${minDeg}deg)`;
+            if (modalAnalog.sec) modalAnalog.sec.style.transform = `translateX(-50%) rotate(${secDeg}deg)`;
+
+            // Sync Modal Day/Date
+            const modalDay = document.getElementById('modal-day');
+            const modalDate = document.getElementById('modal-date');
+            if (modalDay) modalDay.innerText = dayName;
+            if (modalDate) modalDate.innerText = `${monthName} ${dayNum}, ${year}`;
+        }
+
+        // Toggle Analog Clock Modal (Mobile)
+        function toggleAnalogModal() {
+            const modal = document.getElementById('analog-clock-modal');
+            if (window.innerWidth <= 768) {
+                modal.classList.toggle('active');
+            }
         }
 
         setInterval(updateSystemClock, 1000);
         updateSystemClock(); // Initial call
     </script>
+
+    <!-- Analog Clock Modal (Mobile Overlay) -->
+    <div id="analog-clock-modal" class="clock-modal-overlay" onclick="toggleAnalogModal()">
+        <div class="clock-modal-content" onclick="event.stopPropagation()">
+            <div class="analog-clock-card" style="box-shadow: none; background: transparent;">
+                <div class="clock-container" style="width: 280px; height: 280px;">
+                    <div class="clock-face">
+                        <!-- Markers -->
+                        {% for i in range(1, 13) %}
+                        <div class="marker marker-{{ i }}">
+                            <div class="marker-dot"></div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Numbers -->
+                        {% for i in range(1, 13) %}
+                        <div class="number number-{{ i }}"><span class="number-{{ i }}-text">{{ i }}</span></div>
+                        {% endfor %}
+
+                        <div class="hand hour-hand" id="modal-analog-hour"></div>
+                        <div class="hand minute-hand" id="modal-analog-min"></div>
+                        <div class="hand second-hand" id="modal-analog-sec"></div>
+                        <div class="center-pin"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-time-details">
+                <div id="modal-day" class="modal-day-text">--</div>
+                <div id="modal-date" class="modal-date-text">--</div>
+            </div>
+        </div>
+    </div>
 
     {% block scripts %}{% endblock %}
 </body>

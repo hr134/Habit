@@ -416,6 +416,8 @@ textarea:focus {
         width: auto;
         padding: 0.2rem 0.5rem;
         margin-top: 0.1rem !important;
+        cursor: pointer;
+        /* Indicate interactivity */
     }
 
     .time-part {
@@ -738,4 +740,373 @@ textarea:focus {
 .top-bar {
     align-items: center;
     /* Center verify */
+}
+
+/* --- Analog Clock Widget --- */
+.analog-clock-card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem !important;
+    background: var(--bg-card);
+}
+
+.clock-container {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.clock-face {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-card);
+    border-radius: 50%;
+    box-shadow:
+        12px 12px 24px rgba(0, 0, 0, 0.1),
+        -12px -12px 24px rgba(255, 255, 255, 0.05);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+[data-theme="dark"] .clock-face {
+    box-shadow:
+        12px 12px 24px rgba(0, 0, 0, 0.3),
+        -5px -5px 15px rgba(255, 255, 255, 0.02);
+}
+
+.clock-face::before {
+    content: "";
+    position: absolute;
+    width: 90%;
+    height: 90%;
+    background-color: transparent;
+    border-radius: 50%;
+    box-shadow:
+        inset 8px 8px 16px rgba(0, 0, 0, 0.1),
+        inset -8px -8px 16px rgba(255, 255, 255, 0.05);
+}
+
+.marker {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.marker-dot {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: var(--primary);
+    /* Use primary color for markers */
+    opacity: 0.5;
+}
+
+.marker-3 .marker-dot,
+.marker-6 .marker-dot,
+.marker-9 .marker-dot,
+.marker-12 .marker-dot {
+    width: 6px;
+    height: 6px;
+    opacity: 0.8;
+}
+
+.marker-1 {
+    transform: rotate(30deg);
+}
+
+.marker-2 {
+    transform: rotate(60deg);
+}
+
+.marker-3 {
+    transform: rotate(90deg);
+}
+
+.marker-4 {
+    transform: rotate(120deg);
+}
+
+.marker-5 {
+    transform: rotate(150deg);
+}
+
+.marker-6 {
+    transform: rotate(180deg);
+}
+
+.marker-7 {
+    transform: rotate(210deg);
+}
+
+.marker-8 {
+    transform: rotate(240deg);
+}
+
+.marker-9 {
+    transform: rotate(270deg);
+}
+
+.marker-10 {
+    transform: rotate(300deg);
+}
+
+.marker-11 {
+    transform: rotate(330deg);
+}
+
+.marker-12 {
+    transform: rotate(360deg);
+}
+
+.number {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    z-index: 2;
+}
+
+.number-1 {
+    transform: rotate(30deg);
+}
+
+.number-1-text {
+    display: inline-block;
+    transform: translateY(22px) rotate(-30deg);
+}
+
+.number-2 {
+    transform: rotate(60deg);
+}
+
+.number-2-text {
+    display: inline-block;
+    transform: translateY(22px) rotate(-60deg);
+}
+
+.number-3 {
+    transform: rotate(90deg);
+}
+
+.number-3-text {
+    display: inline-block;
+    transform: translateY(22px) rotate(-90deg);
+}
+
+.number-4 {
+    transform: rotate(120deg);
+}
+
+.number-4-text {
+    display: inline-block;
+    transform: translateY(22px) rotate(-120deg);
+}
+
+.number-5 {
+    transform: rotate(150deg);
+}
+
+.number-5-text {
+    display: inline-block;
+    transform: translateY(22px) rotate(-150deg);
+}
+
+.number-6 {
+    transform: rotate(180deg);
+}
+
+.number-6-text {
+    display: inline-block;
+    transform: translateY(22px) rotate(-180deg);
+}
+
+.number-7 {
+    transform: rotate(210deg);
+}
+
+.number-7-text {
+    display: inline-block;
+    transform: translateY(22px) rotate(-210deg);
+}
+
+.number-8 {
+    transform: rotate(240deg);
+}
+
+.number-8-text {
+    display: inline-block;
+    transform: translateY(22px) rotate(-240deg);
+}
+
+.number-9 {
+    transform: rotate(270deg);
+}
+
+.number-9-text {
+    display: inline-block;
+    transform: translateY(22px) rotate(-270deg);
+}
+
+.number-10 {
+    transform: rotate(300deg);
+}
+
+.number-10-text {
+    display: inline-block;
+    transform: translateY(22px) rotate(-300deg);
+}
+
+.number-11 {
+    transform: rotate(330deg);
+}
+
+.number-11-text {
+    display: inline-block;
+    transform: translateY(22px) rotate(-330deg);
+}
+
+.number-12 {
+    transform: rotate(360deg);
+}
+
+.number-12-text {
+    display: inline-block;
+    transform: translateY(22px) rotate(-360deg);
+}
+
+.hand {
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform-origin: bottom center;
+    border-radius: 4px 4px 0 0;
+}
+
+.hour-hand {
+    width: 6px;
+    height: 40px;
+    background: var(--text-main);
+    z-index: 5;
+}
+
+.minute-hand {
+    width: 4px;
+    height: 60px;
+    background: var(--primary);
+    z-index: 6;
+}
+
+.second-hand {
+    width: 2px;
+    height: 70px;
+    background: #ef4444;
+    z-index: 7;
+}
+
+.center-pin {
+    width: 10px;
+    height: 10px;
+    background: var(--bg-card);
+    border-radius: 50%;
+    position: absolute;
+    z-index: 10;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.center-pin::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 4px;
+    background: var(--text-main);
+    border-radius: 50%;
+}
+
+/* --- Analog Clock Modal Overlay --- */
+.clock-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.clock-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.clock-modal-content {
+    background: var(--bg-card);
+    padding: 2.5rem;
+    border-radius: 40px;
+    text-align: center;
+    transform: scale(0.8);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.clock-modal-overlay.active .clock-modal-content {
+    transform: scale(1);
+}
+
+[data-theme="light"] .clock-modal-content {
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* --- Mobile specific refinements --- */
+@media (max-width: 768px) {
+    .dashboard-grid .analog-clock-card {
+        display: none !important;
+    }
+}
+
+.modal-time-details {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.modal-day-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.25rem;
+}
+
+.modal-date-text {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    opacity: 0.8;
 }

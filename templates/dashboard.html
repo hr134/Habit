@@ -187,7 +187,31 @@
 
     <!-- Sidebar Column -->
     <div>
-        <!-- 5. Quick Actions -->
+        <!-- 5. Analog Clock -->
+        <div class="card analog-clock-card">
+            <div class="clock-container">
+                <div class="clock-face">
+                    <!-- Markers -->
+                    {% for i in range(1, 13) %}
+                    <div class="marker marker-{{ i }}">
+                        <div class="marker-dot"></div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- Numbers -->
+                    {% for i in range(1, 13) %}
+                    <div class="number number-{{ i }}"><span class="number-{{ i }}-text">{{ i }}</span></div>
+                    {% endfor %}
+
+                    <div class="hand hour-hand" id="analog-hour"></div>
+                    <div class="hand minute-hand" id="analog-min"></div>
+                    <div class="hand second-hand" id="analog-sec"></div>
+                    <div class="center-pin"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Quick Actions -->
         <div class="card">
             <h3>Quick Actions</h3>
             <ul style="list-style: none; padding: 0;">
@@ -197,5 +221,6 @@
             </ul>
         </div>
     </div>
+</div>
 </div>
 {% endblock %}
