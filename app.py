@@ -35,8 +35,9 @@ from models import db, User, Habit, HabitLog, Schedule, RoutineItem, ScheduleLog
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Correctly handle proxy headers (like Render) to get real client IP
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+# Correctly handle proxy headers (Client -> Cloudflare -> Render -> App)
+# We trust 2 proxies: Render and Cloudflare
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=2, x_host=2, x_port=2, x_prefix=2)
 
 db.init_app(app)
 login_manager = LoginManager(app)
@@ -81,7 +82,13 @@ def inject_now():
     }
 
 def get_client_ip():
-    """Returns the real client IP. Relies on ProxyFix middleware to parse headers."""
+    """Returns the real client IP, prioritizing cloudflare and proxy headers."""
+    # Check Cloudflare first as it's the most direct client IP source in this stack
+    cf_ip = request.headers.get('Cf-Connecting-Ip') or request.headers.get('True-Client-Ip')
+    if cf_ip:
+        return cf_ip
+    
+    # Fallback to remote_addr (which is corrected by ProxyFix)
     return request.remote_addr
 
 # --- Auth Routes ---
@@ -441,18 +448,6 @@ def admin_cleanup_guests():
     return redirect(url_for('admin_dashboard'))
 
 # --- Main Routes ---
-@app.route('/admin/debug/headers')
-@login_required
-@admin_required
-def debug_headers():
-    headers = dict(request.headers)
-    return jsonify({
-        "remote_addr": request.remote_addr,
-        "x_forwarded_for": request.headers.get('X-Forwarded-For'),
-        "x_real_ip": request.headers.get('X-Real-IP'),
-        "all_headers": headers
-    })
-
 @app.route('/ping')
 def ping():
     return "PONG", 200
