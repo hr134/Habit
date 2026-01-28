@@ -1,5 +1,5 @@
 {
-  "name": "HR",
+  "name": "Habit Tracker",
   "short_name": "Habit Tracker",
   "start_url": "/",
   "display": "standalone",
@@ -16,6 +16,17 @@
       "name": "Add Habit",
       "short_name": "Add",
       "url": "/habits",
+      "icons": [
+        {
+          "src": "/static/img/mylogo.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Calendar",
+      "short_name": "Calendar",
+      "url": "/calendar",
       "icons": [
         {
           "src": "/static/img/mylogo.png",
