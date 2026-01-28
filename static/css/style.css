@@ -295,8 +295,8 @@ main {
 .top-bar::before {
     content: '';
     position: absolute;
-    top: -2rem;
-    /* Extend up to cover top gap */
+    top: -100vh;
+    /* Massive extension up */
     left: -2rem;
     /* Cover left padding */
     right: -2rem;

@@ -6,6 +6,35 @@
   "background_color": "#ffffff",
   "theme_color": "#6366f1",
   "orientation": "portrait",
+  "description": "Master your day with the ultimate Habit Tracker.",
+  "categories": [
+    "productivity",
+    "lifestyle"
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Habit",
+      "short_name": "Add",
+      "url": "/habits",
+      "icons": [
+        {
+          "src": "/static/img/mylogo.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Prayer Times",
+      "short_name": "Prayers",
+      "url": "/prayers",
+      "icons": [
+        {
+          "src": "/static/img/mylogo.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
   "icons": [
     {
       "src": "/static/img/mylogo.png",
