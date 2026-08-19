@@ -604,37 +604,37 @@ def keep_alive():
             print(f"Keep-alive: Ping failed: {e}")
         time.sleep(600) # Ping every 10 minutes
 
-# Start the keep-alive thread
-if os.environ.get('RENDER'):
-    threading.Thread(target=keep_alive, daemon=True).start()
+# # Start the keep-alive thread
+# if os.environ.get('RENDER'):
+#     threading.Thread(target=keep_alive, daemon=True).start()
 
-@app.route('/')
-def index():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
+# @app.route('/')
+# def index():
+#     if current_user.is_authenticated:
+#         return redirect(url_for('dashboard'))
+#     return redirect(url_for('login'))
 
-def recalculate_day_score(day_id):
-    """
-    Sum up all points for a given day (Habits, Prayers, Schedule).
-    """
-    from models import HabitLog, PrayerLog, ScheduleLog, Day
-    day = Day.query.get(day_id)
-    if not day: return 0
+# def recalculate_day_score(day_id):
+#     """
+#     Sum up all points for a given day (Habits, Prayers, Schedule).
+#     """
+#     from models import HabitLog, PrayerLog, ScheduleLog, Day
+#     day = Day.query.get(day_id)
+#     if not day: return 0
     
-    habit_points = db.session.query(db.func.sum(HabitLog.points)).filter(HabitLog.day_id == day_id).scalar() or 0
-    prayer_points = db.session.query(db.func.sum(PrayerLog.spiritual_score)).filter(PrayerLog.day_id == day_id).scalar() or 0
-    schedule_points = db.session.query(db.func.sum(ScheduleLog.points)).filter(ScheduleLog.day_id == day_id, ScheduleLog.status == True).scalar() or 0
+#     habit_points = db.session.query(db.func.sum(HabitLog.points)).filter(HabitLog.day_id == day_id).scalar() or 0
+#     prayer_points = db.session.query(db.func.sum(PrayerLog.spiritual_score)).filter(PrayerLog.day_id == day_id).scalar() or 0
+#     schedule_points = db.session.query(db.func.sum(ScheduleLog.points)).filter(ScheduleLog.day_id == day_id, ScheduleLog.status == True).scalar() or 0
     
-    day.total_score = int(habit_points + prayer_points + schedule_points)
-    db.session.commit()
-    return day.total_score
+#     day.total_score = int(habit_points + prayer_points + schedule_points)
+#     db.session.commit()
+#     return day.total_score
 
-@app.route('/dashboard', methods=['GET', 'POST'])
-@login_required
-def dashboard():
-    today = get_today()
-    current_day = ensure_day(current_user.id, today)
+# @app.route('/dashboard', methods=['GET', 'POST'])
+# @login_required
+# def dashboard():
+#     today = get_today()
+#     current_day = ensure_day(current_user.id, today)
         
     # Handle Day Updates (Intention, Energy, Mood)
     if request.method == 'POST':
